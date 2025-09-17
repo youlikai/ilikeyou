@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Heart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        heart: {
+                            light: '#FF6B8B',
+                            DEFAULT: '#FF3A6E',
+                            dark: '#E02040'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .heart-gradient {
+                background: linear-gradient(135deg, #FF6B8B 0%, #FF3A6E 50%, #E02040 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .pulse-soft {
+                animation: pulse-soft 3s infinite;
+            }
+            @keyframes pulse-soft {
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div class="text-center mb-8 opacity-0 transition-opacity duration-1000" id="heading">
+        <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-gray-800 mb-2 text-shadow">Love in Motion</h1>
+        <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-600 max-w-md mx-auto">A heart that draws itself just for you</p>
+    </div>
+    
+    <div class="relative w-full max-w-md aspect-square flex items-center justify-center mb-8">
+        <!-- Heart Canvas -->
+        <canvas id="heartCanvas" class="w-full h-full max-w-md max-h-md pulse-soft"></canvas>
+        
+        <!-- Sparkles -->
+        <div class="absolute inset-0 pointer-events-none">
+            <div class="sparkle absolute w-2 h-2 bg-white rounded-full shadow-lg" style="top: 30%; left: 40%;"></div>
+            <div class="sparkle absolute w-3 h-3 bg-white rounded-full shadow-lg" style="top: 45%; left: 65%;"></div>
+            <div class="sparkle absolute w-2 h-2 bg-white rounded-full shadow-lg" style="top: 60%; left: 35%;"></div>
+            <div class="sparkle absolute w-1.5 h-1.5 bg-white rounded-full shadow-lg" style="top: 35%; left: 55%;"></div>
+            <div class="sparkle absolute w-2 h-2 bg-white rounded-full shadow-lg" style="top: 55%; left: 60%;"></div>
+        </div>
+    </div>
+    
+    <div class="text-center opacity-0 transition-opacity duration-1000 delay-1000" id="footer">
+        <p class="text-gray-500 text-sm">Created with <i class="fa fa-heart text-heart animate-pulse"></i> for a memorable moment</p>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show heading with delay
+            setTimeout(() => {
+                document.getElementById('heading').classList.remove('opacity-0');
+            }, 500);
+            
+            // Show footer with delay
+            setTimeout(() => {
+                document.getElementById('footer').classList.remove('opacity-0');
+            }, 1500);
+            
+            // Animate sparkles
+            const sparkles = document.querySelectorAll('.sparkle');
+            sparkles.forEach((sparkle, index) => {
+                // Random animation delay for each sparkle
+                const delay = Math.random() * 3;
+                
+                // Create animation
+                const anim = sparkle.animate([
+                    { opacity: 0, transform: 'scale(0)' },
+                    { opacity: 1, transform: 'scale(1.5)' },
+                    { opacity: 0, transform: 'scale(0)' }
+                ], {
+                    duration: 3000 + Math.random() * 2000,
+                    delay: delay * 1000,
+                    iterations: Infinity
+                });
+            });
+            
+            // Heart drawing animation
+            const canvas = document.getElementById('heartCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                const size = Math.min(container.clientWidth, container.clientHeight);
+                canvas.width = size;
+                canvas.height = size;
+                drawHeart(0); // Redraw with 0 progress when resized
+            }
+            
+            // Initial resize and listen for window resize
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Heart drawing function
+            function drawHeart(progress) {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const size = Math.min(canvas.width, canvas.height) * 0.4;
+                
+                // Start path
+                ctx.beginPath();
+                
+                // Calculate heart points based on progress
+                const maxPoints = 100;
+                const pointsToDraw = Math.floor(maxPoints * progress);
+                
+                for (let i = 0; i <= pointsToDraw; i++) {
+                    const t = (i / maxPoints) * 2 * Math.PI;
+                    
+                    // Parametric equations for a heart shape
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                    
+                    // Scale and position the heart
+                    const pointX = centerX + (x * size / 16);
+                    const pointY = centerY + (y * size / 16) * -1; // Negative because canvas Y increases downward
+                    
+                    if (i === 0) {
+                        ctx.moveTo(pointX, pointY);
+                    } else {
+                        ctx.lineTo(pointX, pointY);
+                    }
+                }
+                
+                // Create gradient
+                const gradient = ctx.createLinearGradient(
+                    centerX - size, centerY - size,
+                    centerX + size, centerY + size
+                );
+                gradient.addColorStop(0, '#FF6B8B');
+                gradient.addColorStop(1, '#E02040');
+                
+                // Set stroke styles
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+                
+                // Fill when complete
+                if (progress >= 1) {
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+            }
+            
+            // Animate the drawing process
+            let startTime;
+            const duration = 2000; // 2 seconds for full animation
+            
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                
+                drawHeart(progress);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Add a subtle pulse after completion
+                    setInterval(() => {
+                        canvas.classList.toggle('scale-100');
+                        canvas.classList.toggle('scale-105');
+                    }, 2000);
+                }
+            }
+            
+            // Start the animation
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
